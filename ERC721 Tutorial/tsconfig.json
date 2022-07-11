@@ -1,3 +1,5 @@
+
+// ts관련 문제 생길때, CMD + SHIFT + P 입력 후 타입스크립트 서버 재시작 
 {
     "compilerOptions": {
         "target": "es2017",
