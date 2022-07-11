@@ -1,0 +1,10 @@
+
+- npm dependency 목록
+The @openzeppelin/contracts is a library for a secure smart contract development. We inherit from their ERC721 smart contract;
+The @truffle/hdwallet-provider is used to sign transactions for addresses derived from a 12 or 24 word mnemonic. In our case we will create a MetaMask wallet and provide the mnemonic from there to deploy to the Avalanche Fuji testnet;
+The dotenv is a zero-dependency module that loads environment variables from a .env file into process.env. We do not want to leak our mnemonic to other people after all;
+The typechain allows us to use TypeScript within Truffle;
+The truffle-typings is a library that goes with TypeChain should you want to use TypeScript for your Truffle environment;
+The ts-node is a package which we would need for a TypeScript execution of our scripts in Node.js;
+The @openzeppelin/test-helpers is a library that will helps us test when transactions revert and also handle Big Numbers for us. It is a dev dependency;
+The solidity-coverage is a library that we will use to check how much coverage our tests have. It is again a dev dependency;
