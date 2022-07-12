@@ -38,6 +38,15 @@ contract Collectible is ERC721URIStorage {
         emit ItemMinted(newItemId, msg.sender, metadata, royalty);
         return newItemId;
     }
+
+    function getItemsLength() public view returns (uint256) {
+        return items.length;
+    }
+    
+    function getItem(uint256 tokenId) public view returns (address, address, uint256)
+    {
+        return (tokenIdToItem[tokenId].owner, tokenIdToItem[tokenId].creator, tokenIdToItem[tokenId].royalty);
+    }
 }
 
 
