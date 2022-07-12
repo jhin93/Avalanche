@@ -17,6 +17,27 @@ contract Collectible is ERC721URIStorage {
     event ItemMinted(uint256 tokenId, address creator, string metadata, uint256 royalty);
     
     constructor() ERC721("NFTCollectible", "NFTC") {}
+
+    function createCollectible(string memory metadata, uint256 royalty) public returns (uint256)
+    {
+        require(
+            !hasBeenMinted[metadata],
+            "This metadata has already been used to mint an NFT."
+        );
+        require(
+            royalty >= 0 && royalty <= 40,
+            "Royalties must be between 0% and 40%"
+        );
+        Item memory newItem = Item(msg.sender, msg.sender, royalty);
+        items.push(newItem);
+        uint256 newItemId = items.length;
+        _safeMint(msg.sender, newItemId);
+        _setTokenURI(newItemId, metadata);
+        tokenIdToItem[newItemId] = newItem;
+        hasBeenMinted[metadata] = true;
+        emit ItemMinted(newItemId, msg.sender, metadata, royalty);
+        return newItemId;
+    }
 }
 
 
