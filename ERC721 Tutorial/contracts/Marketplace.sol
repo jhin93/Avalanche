@@ -36,6 +36,7 @@ contract Marketplace is Collectible {
         _;
     }
 
+    // The listItem(uint256 tokenId, uint256 price) function:
     function listItem(uint256 tokenId, uint256 price) public onlyTokenOwner(tokenId) 
     {   // The function takes two parameters, namely the token id and the price. 
         require(!hasBeenListed[tokenId], "The token can only be listed once"); // We begin by defining the constraints which are that only the token owner can list the NFT and that this NFT has not been listed already.
@@ -48,6 +49,18 @@ contract Marketplace is Collectible {
         hasBeenListed[tokenId] = true; // and by specifying that the token id has been listed.
         emit ItemListed(tokenId, price, msg.sender); // At the end, as usual, we emit an event.
     }
+
+    // The cancelListing(uint256 tokenId) function:
+    function cancelListing(uint256 tokenId) public onlyListingAccount(tokenId) /// Here our constraint is that only the address that has listed the item can cancel the listing. 
+    { 
+        _transfer(address(this), msg.sender, tokenId); // Here we transfer the item from the Marketplace smart contract back to the one who listed it,
+        uint256 price = tokenIdToListing[tokenId].price;
+        delete claimableByAccount[tokenId]; // Since the mapping claimableByAccount[tokenId] is then cleared via the delete keyword we do not need to check that the item has been listed. 
+        delete tokenIdToListing[tokenId];
+        delete hasBeenListed[tokenId];
+        emit ListingCancelled(tokenId, price, msg.sender); // and emit an event by providing it information about the token id, the price and who cancelled the listing.
+    }
+
 
 }
 
