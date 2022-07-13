@@ -4,6 +4,8 @@ pragma solidity ^0.8.6;
 import "../node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "../node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+// 설명.
+// https://docs.avax.network/community/tutorials-contest/avalanche-erc721-tutorial#writing-our-first-erc721-contract
 
 contract Collectible is ERC721URIStorage {
     mapping(string => bool) public hasBeenMinted;

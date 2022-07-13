@@ -3,6 +3,9 @@ pragma solidity ^0.8.6;
 
 import './Collectible.sol';
 
+// 설명.
+// https://docs.avax.network/community/tutorials-contest/avalanche-erc721-tutorial#writing-our-first-erc721-contract
+
 contract Marketplace is Collectible {
     using SafeMath for uint256;
 
@@ -32,6 +35,20 @@ contract Marketplace is Collectible {
         );
         _;
     }
+
+    function listItem(uint256 tokenId, uint256 price) public onlyTokenOwner(tokenId) 
+    {
+        require(!hasBeenListed[tokenId], "The token can only be listed once");
+        _transfer(msg.sender, address(this), tokenId);
+        claimableByAccount[tokenId] = msg.sender;
+        tokenIdToListing[tokenId] = Listing(
+            price,
+            msg.sender
+        );
+        hasBeenListed[tokenId] = true;
+        emit ItemListed(tokenId, price, msg.sender);
+    }
+
 }
 
 
