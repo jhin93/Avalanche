@@ -61,6 +61,41 @@ contract Marketplace is Collectible {
         emit ListingCancelled(tokenId, price, msg.sender); // and emit an event by providing it information about the token id, the price and who cancelled the listing.
     }
 
+    // The buyItem(uint256 tokenId) function:
+    function buyItem(uint256 tokenId) public payable { // Here the function takes the token id as a parameter and is a payable function, meaning that the user can send AVAX via it to the smart contract. 
+        require(hasBeenListed[tokenId], "The token needs to be listed in order to be bought."); // We then first check whether the item has been listed and whether the msg.value which we send with our function call equals the price of the token.
+        require(tokenIdToListing[tokenId].price == msg.value, "You need to pay the correct price."); // If that is the case we split up the msg.value based on the royalty that is defined in the Item. msg.value is another global variable in Solidity:
+        
+        //split up the price between owner and creator
+        uint256 royaltyForCreator = tokenIdToItem[tokenId].royalty.mul(msg.value).div(100); // In the first line we multiply the royalty by the msg.value and then divide it by 100, since we are talking about percentages.
+        uint256 remainder = msg.value.sub(royaltyForCreator); // .sub() = SafeMath의 sub 메소드. Meaning that if the buyer pays 10 AVAX for the NFT and the royalty is 20%, 2 AVAX would go to the creator and the remaining 8 AVAX would go to the seller. 
+        
+        //Afterwards we transfer the NFT from the Marketplace smart contract to the buyer and update the Item by modifying the owner property. 
+        //send to creator
+        (bool isRoyaltySent, ) = tokenIdToItem[tokenId].creator.call{value: royaltyForCreator}("");
+        require(isRoyaltySent, "Failed to send AVAX");
+        //send to owner
+        (bool isRemainderSent, ) = tokenIdToItem[tokenId].owner.call{value: remainder}("");
+        require(isRemainderSent, "Failed to send AVAX");
+
+        //transfer the token from the smart contract back to the buyer
+        _transfer(address(this), msg.sender, tokenId);
+
+        //Modify the owner property of the item to be the buyer
+        Item storage item = tokenIdToItem[tokenId];
+        item.owner = msg.sender;
+
+        // Finally, as we did before, we clean up the mappings and emit an event passing the necessary information to it.
+        //clean up
+        delete tokenIdToListing[tokenId];
+        delete claimableByAccount[tokenId];
+        delete hasBeenListed[tokenId];
+        emit ItemBought(tokenId, msg.value, msg.sender);
+    }
+    function getListing(uint256 tokenId) public view returns (uint256, address)
+    { // At the end we define a view function which is used to obtain information about a certain listing. Again, calling this function costs no gas.
+        return (tokenIdToListing[tokenId].price, tokenIdToListing[tokenId].owner);
+    }
 
 }
 
