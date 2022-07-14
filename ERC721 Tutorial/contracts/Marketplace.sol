@@ -73,6 +73,12 @@ contract Marketplace is Collectible {
         //Afterwards we transfer the NFT from the Marketplace smart contract to the buyer and update the Item by modifying the owner property. 
         //send to creator
         (bool isRoyaltySent, ) = tokenIdToItem[tokenId].creator.call{value: royaltyForCreator}("");
+        // .call{보낼 이더}(함수를 호출하는 공간). 
+        // 1. 송금만 하는 상황 call{value:보낼 value}(""). 함수호출을 하지 않는다면 뒤의 ("")부분은 비워둔다.
+        // 2. 함수 호출만 하는 상황.("")의 ""안에 부르려는 함수를 기재. 이더를 보내지 않는다면 .call("")처럼 {}를 생략한 형태가 될 것.
+        // https://www.youtube.com/watch?v=ax5lHvxL9dE 6분 ~ 9분
+        // https://medium.com/coinmonks/solidity-transfer-vs-send-vs-call-function-64c92cfc878a
+        // (bool sent, bytes memory data) = _to.call.gas(10000){value: msg.value}("");
         require(isRoyaltySent, "Failed to send AVAX");
         //send to owner
         (bool isRemainderSent, ) = tokenIdToItem[tokenId].owner.call{value: remainder}("");
