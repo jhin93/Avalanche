@@ -35,4 +35,76 @@ contract('Collectible', ([contractDeployer, creator, buyer]) => { // first param
             assert.equal(symbol, 'NFTC', 'The symbol should be NFTC.')
         })
     })
+
+    // In the second describe() block we test our createCollectible() function. For that we need to write individual tests for every statement that we make.
+    describe('Mint an NFT and set a royalty.', async () => {
+
+        // First we check that the 'metadata' is not minted. For that we call the hasBeenMinted('metadata') function which is in fact our mapping in our Collectible.sol file. This returns us a boolean which is false.
+        it('The hash \'metadata\' is not minted before the function call.', async () => {
+            const hasBeenMinted = await collectible.hasBeenMinted('metadata')
+            assert.equal(hasBeenMinted, false, 'The hash \'metadata\' has not been minted, so it should be false.')
+        })
+
+        // Afterwards, we expect that the minting function reverts if we provide a royalty that is not between 0% and 40%. In that case we try with 41%.
+        it('The royalty needs to be a number between 0 and 40.', async () => {
+            await expectRevert(collectible.createCollectible('metadata', 41), "Royalties must be between 0% and 40%.");
+        })
+
+        // Then, before we complete the transaction we can check what the return value would be. 
+        // As we know, our createCollectible() function returns a token id. We can grab this by executing the function without changing the state:
+        it('Give a new id to a newly created token', async () => {
+            const newTokenId = await collectible.createCollectible.call('metadata', 20, { from: creator })
+            // Then we simply compare the newTokenId to 1 and expect them to be equal, since our first NFT should have the token id 1.
+            assert.equal(parseInt(newTokenId.toString()), 1, 'The new token id should be 1.')
+        })
+
+        // Now we do not only exectute the createCollectible() function but also change the state in our next it():
+
+        // Our variable which is the result of the function call is no longer the token id, but a transaction receipt, meaning that we obtain much more information out of it.
+        // Cool, right? Let us put this information to use. We test whether the correct events are emitted since they are the signal that we need. In this case we have two.
+        it('Mint a NFT and emit events.', async () => {
+            const result = await collectible.createCollectible('metadata', 20, { from: creator })
+            assert.equal(result.logs.length, 2, 'Should trigger two events.');
+            //One is the Transfer event which comes from the _safeMint(msg.sender, newItemId) function of the ERC721.sol smart contract.
+            //event Transfer
+            assert.equal(result.logs[0].event, 'Transfer', 'Should be the \'Transfer\' event.');
+            assert.equal(result.logs[0].args.from, 0x0, 'Should be the 0x0 address.');
+            assert.equal(result.logs[0].args.to, creator, 'Should log the recipient which is the creator.');
+            assert.equal(result.logs[0].args.tokenId, 1, 'Should log the token id which is 1.');
+
+            //The other one is our own ItemMinted event. We check for the correct name and the correct arguments.
+            //event ItemMinted
+            assert.equal(result.logs[1].event, 'ItemMinted', 'Should be the \'ItemMinted\' event.');
+            assert.equal(result.logs[1].args.tokenId, 1, 'Should be the token id 1.');
+            assert.equal(result.logs[1].args.creator, creator, 'Should log the creator.');
+            assert.equal(result.logs[1].args.metadata, 'metadata', 'Should log the metadata correctly.');
+            assert.equal(result.logs[1].args.royalty, 20, 'Should log the royalty as 20.');
+        })
+
+        // In the remaining it()-s we check whether the mappings were updated accordingly and whether our Item has the correct values. 
+        // Our final it() makes sure that the transaction reverts if we call the createCollectible() function with the same metadata parameter value.
+        it('The items array has a length of 1.', async () => {
+            const itemsLength = await collectible.getItemsLength()
+            assert.equal(itemsLength, 1, 'The items array should have 1 entry in it.')
+        })
+
+        it('The new item has the correct data.', async () => {
+            const item = await collectible.getItem(1)
+            assert.notEqual(item['0'], buyer, 'The buyer should not be the creator.')
+            assert.equal(item['0'], creator, 'The creator is the owner.')
+            assert.equal(item['1'], creator, 'The creator is the creator.')
+            assert.equal(item['2'], 20, 'The royalty is set to 20.')
+        })
+
+        it('Check if hash has been minted and that you cannot mint the same hash again.', async () => {
+            const hasBeenMinted = await collectible.hasBeenMinted('metadata')
+            assert.equal(hasBeenMinted, true, 'The hash \'metadata\' has been minted.')
+            await expectRevert(collectible.createCollectible('metadata', 30, { from: creator }), 'This metadata has already been used to mint an NFT.');
+        })
+    })
 })
+// Now that we are done writing the test, in our console we simply run the command:
+// npx truffle test
+// Note: You might notice that this would run the command truffle compile beforehand. 
+// This would create a build/contracts folder in our root directory where the .json representations of all of our used contracts are stored. 
+// These are in fact used when you call functions on the frontend.
